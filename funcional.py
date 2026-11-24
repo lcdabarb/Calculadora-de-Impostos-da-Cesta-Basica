@@ -101,3 +101,70 @@ if __name__ == "__main__":
 
     print("\nItens ordenados por preço:")
     print(ordenar_por_preco(itens))
+
+from functools import reduce
+
+
+def criar_calculadora(aliquota_padrao):
+    if aliquota_padrao < 0:
+        raise ValueError("A alíquota não pode ser negativa.")
+
+    def calcular(item):
+        if item.categoria == "cesta_basica":
+            taxa = 0.0
+        elif item.categoria == "reduzido":
+            taxa = aliquota_padrao * 0.40
+        elif item.categoria == "padrao":
+            taxa = aliquota_padrao
+        else:
+            raise ValueError("Categoria inválida.")
+
+        return round(
+            round(item.preco * taxa, 2) * item.quantidade,
+            2
+        )
+
+    return calcular
+
+
+def compor(*funcoes):
+    return lambda x: reduce(
+        lambda resultado, funcao: funcao(resultado),
+        reversed(funcoes),
+        x
+    )
+
+
+def gerar_relatorio(itens):
+    categorias = ("cesta_basica", "reduzido", "padrao")
+
+    por_categoria = dict(
+        map(
+            lambda categoria: (
+                categoria,
+                round(
+                    sum(
+                        map(
+                            lambda item: (
+                                item.preco * item.quantidade
+                                + imposto_item(item)
+                            ),
+                            filter(
+                                lambda item: item.categoria == categoria,
+                                itens
+                            )
+                        )
+                    ),
+                    2
+                )
+            ),
+            categorias
+        )
+    )
+
+    return {
+        "por_categoria": por_categoria,
+        "total_impostos": total_impostos(itens),
+        "total": total_compra(itens),
+        "economia": economia_total(itens)
+    }
